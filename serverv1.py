@@ -1,5 +1,7 @@
+# Server
 import socket
 import threading
+
 
 class Server:
     def __init__(self, host='127.0.0.1', port=45685):
