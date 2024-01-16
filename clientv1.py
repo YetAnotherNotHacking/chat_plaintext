@@ -4,12 +4,11 @@ import PySimpleGUI as sg
 
 class Client:
     def __init__(self, host='127.0.0.1', port=45685):
-        self.nickname = ''
+        self.nickname = 'NICK'
 
         # Set up the GUI layout
         layout = [
-            [sg.Text("Enter your nickname: "), sg.Input(key='-NICKNAME-')],
-            [sg.Multiline(size=(60, 20), key='-MESSAGE-')],
+            [sg.Text("Enter your message: "), sg.Input(key='-MESSAGE-')],
             [sg.Button('Send'), sg.Button('Exit')]
         ]
 
@@ -57,12 +56,8 @@ class Client:
                     self.write(message)
                     self.window['-MESSAGE-'].update('')  # Clear the input field
 
-# Get the nickname from the user
-nickname = sg.popup_get_text('Enter your nickname')
-
-# Create the client instance with the entered nickname
+# Create the client instance
 client = Client()
-client.nickname = nickname
 client.start()
 
 # Close the PySimpleGUI window
