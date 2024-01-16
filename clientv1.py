@@ -4,11 +4,12 @@ import PySimpleGUI as sg
 
 class Client:
     def __init__(self, host='127.0.0.1', port=45685):
-        self.nickname = 'NICK'
+        self.nickname = ''
 
         # Set up the GUI layout
         layout = [
-            [sg.Text("Enter your message: "), sg.Input(key='-MESSAGE-')],
+            [sg.Text("Enter your nickname: "), sg.Input(key='-NICKNAME-')],
+            [sg.Multiline(size=(60, 20), key='-MESSAGE-')],
             [sg.Button('Send'), sg.Button('Exit')]
         ]
 
@@ -17,10 +18,6 @@ class Client:
         # Connect to the server
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.client.connect((host, port))
-
-        # Send the nickname to the server
-        self.client.send('NICK'.encode('ascii'))
-        self.client.send(self.nickname.encode('ascii'))
 
     def receive(self):
         while True:
@@ -51,10 +48,16 @@ class Client:
                 break
 
             if event == 'Send':
-                message = values["-MESSAGE-"].strip()
-                if message:
-                    self.write(message)
-                    self.window['-MESSAGE-'].update('')  # Clear the input field
+                self.nickname = values['-NICKNAME-']
+                if not self.nickname:
+                    sg.popup_error('Please enter a nickname.')
+                else:
+                    self.client.send('NICK'.encode('ascii'))
+                    self.client.send(self.nickname.encode('ascii'))
+                    message = values["-MESSAGE-"].strip()
+                    if message:
+                        self.write(message)
+                        self.window['-MESSAGE-'].update('')  # Clear the input field
 
 # Create the client instance
 client = Client()
