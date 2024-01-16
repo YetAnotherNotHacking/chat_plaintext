@@ -43,17 +43,22 @@ class Client:
         while True:
             try:
                 message = self.client.recv(1024).decode('ascii')
-                if message.startswith('NICK'):
-                    # Update nickname in the GUI
-                    new_nickname = message.split(':')[1].strip()
-                    self.nickname = new_nickname
-                    self.window['-NICKNAME-'].update(f'Nickname: {self.nickname}')
-                else:
-                    print(message)
+                self.process_message(message)
             except:
                 print("An error occurred!")
                 self.client.close()
                 break
+
+    def process_message(self, message):
+        command = message.strip().split(':')
+        if command[0] == 'LIST_CHANNELS':
+            self.update_channel_list(command[1])
+        else:
+            print(message)
+
+    def update_channel_list(self, channels):
+        channel_list = channels.split(',')
+        self.window['-CHANNELS-'].update(values=channel_list)
 
     def write(self, message):
         full_message = f'{self.channel}: {message}'
@@ -61,6 +66,12 @@ class Client:
 
     def list_channels(self):
         self.client.send('LIST_CHANNELS'.encode('ascii'))
+
+    def create_channel(self, channel_name):
+        self.client.send(f'CREATE_CHANNEL:{channel_name}'.encode('ascii'))
+
+    def delete_channel(self, channel_name):
+        self.client.send(f'DELETE_CHANNEL:{channel_name}'.encode('ascii'))
 
     def start(self):
         receive_thread = threading.Thread(target=self.receive)
@@ -91,6 +102,16 @@ class Client:
 
             if event == 'LIST_CHANNELS':
                 self.list_channels()
+
+            if event == 'CREATE_CHANNEL':
+                channel_name = sg.popup_get_text('Enter the channel name:')
+                if channel_name:
+                    self.create_channel(channel_name)
+
+            if event == 'DELETE_CHANNEL':
+                channel_name = sg.popup_get_text('Enter the channel name to delete:')
+                if channel_name:
+                    self.delete_channel(channel_name)
 
 # Create the client instance
 client = Client()
