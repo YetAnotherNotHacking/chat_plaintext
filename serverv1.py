@@ -1,7 +1,5 @@
-# Server
 import socket
 import threading
-
 
 class Server:
     def __init__(self, host='127.0.0.1', port=45685):
@@ -12,6 +10,7 @@ class Server:
         self.server.listen()
         self.clients = []
         self.nicknames = []
+        self.channels = []
         self.lock = threading.Lock()  # Add lock initialization
 
     def broadcast(self, message, sender):
@@ -23,11 +22,11 @@ class Server:
                     except Exception as e:
                         print("Error in the broadcast function, error:", e)
 
-    def handle(self, client):
+    def handle(self, client, nickname):
         while True:
             try:
                 message = client.recv(1024)
-                self.broadcast(message, client)  # Pass client to broadcast
+                self.broadcast(f'{nickname}: {message}', client)  # Include nickname in the message
             except:
                 with self.lock:
                     index = self.clients.index(client)
@@ -37,6 +36,22 @@ class Server:
                     self.nicknames.remove(nickname)
                     self.broadcast(f'{nickname} left the chat!'.encode('ascii'), client)
                 break
+
+    def create_channel(self, channel_name):
+        with self.lock:
+            if channel_name not in self.channels:
+                self.channels.append(channel_name)
+                print(f'Channel "{channel_name}" created.')
+
+    def list_channels(self):
+        with self.lock:
+            return self.channels.copy()
+
+    def remove_channel(self, channel_name):
+        with self.lock:
+            if channel_name in self.channels:
+                self.channels.remove(channel_name)
+                print(f'Channel "{channel_name}" removed.')
 
     def receive(self):
         print('Waiting for connections...')
@@ -56,7 +71,7 @@ class Server:
                 self.broadcast(f'{nickname} joined the chat!'.encode('ascii'), client)
                 client.send('Connected to the server!'.encode('ascii'))
 
-                thread = threading.Thread(target=self.handle, args=(client,))
+                thread = threading.Thread(target=self.handle, args=(client, nickname))
                 thread.start()
             except Exception as e:
                 print(f"Error accepting connection: {e}")
