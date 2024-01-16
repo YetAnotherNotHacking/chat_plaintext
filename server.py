@@ -11,7 +11,7 @@ class Server:
         self.clients = []
         self.nicknames = []
         self.channels = []
-        self.lock = threading.Lock()  # Add lock initialization
+        self.lock = threading.Lock()
 
     def broadcast(self, message, sender):
         with self.lock:
@@ -26,7 +26,7 @@ class Server:
         while True:
             try:
                 message = client.recv(1024)
-                self.broadcast(f'{nickname}: {message}', client)  # Include nickname in the message
+                self.process_message(message, client, nickname)
             except:
                 with self.lock:
                     index = self.clients.index(client)
@@ -37,15 +37,30 @@ class Server:
                     self.broadcast(f'{nickname} left the chat!'.encode('ascii'), client)
                 break
 
+    def process_message(self, message, client, nickname):
+        command = message.decode('ascii').strip().split(':')
+        if command[0] == 'LIST_CHANNELS':
+            self.send_channel_list(client)
+        elif command[0] == 'CREATE_CHANNEL':
+            self.create_channel(command[1])
+        elif command[0] == 'DELETE_CHANNEL':
+            self.remove_channel(command[1])
+        else:
+            self.broadcast(f'{nickname}: {message}', client)
+
     def create_channel(self, channel_name):
         with self.lock:
             if channel_name not in self.channels:
                 self.channels.append(channel_name)
                 print(f'Channel "{channel_name}" created.')
 
-    def list_channels(self):
+    def list_channels(self, client):
         with self.lock:
             return self.channels.copy()
+
+    def send_channel_list(self, client):
+        channels = ','.join(self.list_channels(client))
+        client.send(f'LIST_CHANNELS:{channels}'.encode('ascii'))
 
     def remove_channel(self, channel_name):
         with self.lock:
