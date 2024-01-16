@@ -17,10 +17,11 @@ class Client:
              sg.Button('Change Nickname')],
             [sg.Listbox(values=self.channels, size=(20, 10), key='-CHANNELS-'),
              sg.Multiline(size=(60, 20), key='-MESSAGES-')],
-            [sg.Input(key='-MESSAGE-', size=(40, 1)), sg.Button('Send'), sg.Button('Exit')]
+            [sg.Input(key='-MESSAGE-', size=(40, 1)), sg.Button('Send'), sg.Button('Exit')],
+            [sg.Button('Create Channel'), sg.Button('Delete Channel')]
         ]
 
-        self.window = sg.Window('Chat Platform', self.layout)
+        self.window = sg.Window('Chat Platform', self.layout, return_keyboard_events=True)
 
         # Connect to the server
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -80,11 +81,11 @@ class Client:
         while True:
             event, values = self.window.read()
 
-            if event == sg.WIN_CLOSED or event == 'Exit':
+            if event in (sg.WIN_CLOSED, 'Exit'):
                 self.client.close()
                 break
 
-            if event == 'Send':
+            if event == 'Send' or (event == '\r' and values['-MESSAGE-']):
                 message = values["-MESSAGE-"].strip()
                 if message:
                     self.write(message)
@@ -103,12 +104,12 @@ class Client:
             if event == 'LIST_CHANNELS':
                 self.list_channels()
 
-            if event == 'CREATE_CHANNEL':
+            if event == 'Create Channel':
                 channel_name = sg.popup_get_text('Enter the channel name:')
                 if channel_name:
                     self.create_channel(channel_name)
 
-            if event == 'DELETE_CHANNEL':
+            if event == 'Delete Channel':
                 channel_name = sg.popup_get_text('Enter the channel name to delete:')
                 if channel_name:
                     self.delete_channel(channel_name)
